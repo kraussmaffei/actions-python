@@ -1,0 +1,112 @@
+name: Run quality tasks for python projects
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "The python version to use for executing the quality tasks."
+        required: false
+        type: string
+        default: "3.8"
+      python-package-path:
+        description: "Path of the python package under quality test."
+        required: true
+        type: string
+      unit-test-file-pattern:
+        description: "The pattern to search for unit test files."
+        required: false
+        type: string
+        default: "'test*.py'"
+      additional-script-path:
+        description: "File path to the script which shall be additionally executed."
+        type: string
+        required: false
+        default: ""
+      use-tox:
+        description: "Use tox to run quality tasks"
+        required: false
+        type: string
+        default: false
+
+    secrets:
+      pip-index-url:
+        description: "The pip index url."
+        required: true
+      pip-extra-index-url:
+        description: "The pip extra index url."
+        required: true
+      user-token:
+        description: "Token to be used to checkout the sources."
+        required: false
+      sonar-token:
+        description: "The token to use for sonarcloud."
+        required: false
+
+jobs:
+  format:
+    name: "Check Black Formatting"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+
+  test:
+    name: "Test Python Package"
+    runs-on: ubuntu-20.04
+    needs: [format]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: "Run additional script"
+        if: ${{ inputs.additional-script-path != '' }}
+        shell: bash
+        run: |
+          chmod +x ${{ inputs.additional-script-path }}
+          ${{ inputs.additional-script-path }}
+
+      - name: Running flake8 linter...
+        env:
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
+        shell: bash
+        run: |
+          pip install flake8
+
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 ./${{ inputs.python-package-path }} --count --select=E9,F63,F7,F82 --builtins="_" --show-source --statistics
+
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 ./${{ inputs.python-package-path }} --count --exit-zero --max-complexity=10 --builtins="_" --max-line-length=127 --statistics
+
+      - name: Running coverage calculation...
+        shell: bash
+        env:
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
+          PYTHON_PACKAGE_PATH: ${{ inputs.python-package-path }}
+          UNIT_TEST_FILE_PATTERN: ${{ inputs.unit-test-file-pattern }}
+          COVERAGE_REPORT_OUTPUT: "./coverage-reports/coverage.xml"
+        run: |
+          pip install coverage
+          if [[ "${{ inputs.use-tox }}" == "true" ]]; then
+              echo "Using tox for running unit tests..."
+              pip install tox
+              tox
+          else
+              echo "Using github runner for running unit tests..."
+              pip install .[test-dependencies]
+              coverage run --source=${{ env.PYTHON_PACKAGE_PATH }} -m unittest discover -s tests -p ${{ env.UNIT_TEST_FILE_PATTERN }}
+          fi
+          coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@v1.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.ci-token || github.token }}
+          SONAR_TOKEN: ${{ secrets.sonar-token }}

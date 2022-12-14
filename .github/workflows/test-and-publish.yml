@@ -85,8 +85,6 @@ jobs:
       unit-test-file-pattern: ${{ inputs.unit-test-file-pattern }}
       additional-script-path: ${{ inputs.additional-script-path }}
       use-tox: ${{ inputs.use-tox }}
-      aws-account-id: ${{ inputs.aws-account-id }}
-      codeartifact-repository: ${{ inputs.codeartifact-repository }}
     secrets:
       pip-index-url: ${{ inputs.pip-index-url }}
       pip-extra-index-url: ${{ inputs.pip-extra-index-url }}

@@ -117,6 +117,4 @@ jobs:
           echo Configuring git...
           git config --global user.name ${{ inputs.user-name }}
           git config --global user.email ${{ inputs.user-email }}
-          current_branch=$(git rev-parse --abbrev-ref HEAD)
-          echo "current branch: ${current_branch}"
-          semantic-release publish --define branch="${current_branch}"
+          semantic-release publish --define branch="$(git branch --show-current)"

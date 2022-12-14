@@ -92,6 +92,7 @@ jobs:
       sonar-token: ${{ inputs.sonar-token }}
 
   publish-python-package:
+    needs: test
     uses: kraussmaffei/actions-python/.github/workflows/publish.yml@main
     with:
       python-version: ${{ inputs.python-version }}

@@ -95,11 +95,9 @@ jobs:
     uses: kraussmaffei/actions-python/.github/workflows/publish.yml@main
     with:
       python-version: ${{ inputs.python-version }}
-      python-package-path: ${{ inputs.python-package-path }}
       aws-account-id: ${{ inputs.aws-account-id }}
       codeartifact-repository: ${{ inputs.codeartifact-repository }}
     secrets:
       pip-index-url: ${{ inputs.pip-index-url }}
       pip-extra-index-url: ${{ inputs.pip-extra-index-url }}
       user-token: ${{ inputs.user-token }}
-      sonar-token: ${{ inputs.sonar-token }}

@@ -86,10 +86,10 @@ jobs:
       additional-script-path: ${{ inputs.additional-script-path }}
       use-tox: ${{ inputs.use-tox }}
     secrets:
-      pip-index-url: ${{ inputs.pip-index-url }}
-      pip-extra-index-url: ${{ inputs.pip-extra-index-url }}
-      user-token: ${{ inputs.user-token }}
-      sonar-token: ${{ inputs.sonar-token }}
+      pip-index-url: ${{ secrets.pip-index-url }}
+      pip-extra-index-url: ${{ secrets.pip-extra-index-url }}
+      user-token: ${{ secrets.user-token }}
+      sonar-token: ${{ secrets.sonar-token }}
 
   publish-python-package:
     needs: test
@@ -99,6 +99,6 @@ jobs:
       aws-account-id: ${{ inputs.aws-account-id }}
       codeartifact-repository: ${{ inputs.codeartifact-repository }}
     secrets:
-      pip-index-url: ${{ inputs.pip-index-url }}
-      pip-extra-index-url: ${{ inputs.pip-extra-index-url }}
-      user-token: ${{ inputs.user-token }}
+      pip-index-url: ${{ secrets.pip-index-url }}
+      pip-extra-index-url: ${{ secrets.pip-extra-index-url }}
+      user-token: ${{ secrets.user-token }}

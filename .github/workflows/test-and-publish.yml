@@ -1,0 +1,107 @@
+name: Run tests and publish python package to codeartifact
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "The python version to use for executing the quality tasks."
+        required: false
+        type: string
+        default: "3.8"
+      python-package-path:
+        description: "Path of the python package under quality test."
+        required: true
+        type: string
+      unit-test-file-pattern:
+        description: "The pattern to search for unit test files."
+        required: false
+        type: string
+        default: "'test*.py'"
+      additional-script-path:
+        description: "Script that is to be executed additionally."
+        type: string
+        required: false
+        default: ""
+      use-tox:
+        description: "Uses tox to run quality tasks if 'true'"
+        required: false
+        type: string
+        default: false
+      aws-account-id:
+        description: "The aws account id used for login."
+        type: string
+        required: true
+      aws-region:
+        description: "AWS region of the codeartifact domain."
+        type: string
+        required: false
+        default: "eu-central-1"
+      codeartifact-domain:
+        description: "Domain of the aws codeartifact repository."
+        type: string
+        required: false
+        default: "kraussmaffei"
+      codeartifact-repository:
+        description: "The aws codeartifact repository."
+        type: string
+        required: true
+      ref:
+        description: "The git ref to checkout."
+        type: string
+        required: false
+      user-name:
+        description: "User name to use for commiting code changes."
+        type: string
+        required: false
+        default: "github-actions[bot]"
+      user-email:
+        description: "User email to use for commiting code changes."
+        type: string
+        required: false
+        default: "github-actions[bot]@users.noreply.github.com"
+    secrets:
+      pip-index-url:
+        description: "The pip index url."
+        required: true
+      pip-extra-index-url:
+        description: "The pip extra index url."
+        required: true
+      user-token:
+        description: "Token to be used to checkout the sources."
+        required: false
+      sonar-token:
+        description: "The token to use for sonarcloud."
+        required: false
+    outputs:
+      published-python-package-version:
+        description: "The version string of the published package."
+        value: ${{ jobs.publish-python-package.outputs.published-python-package-version }}
+
+jobs:
+  test:
+    uses: kraussmaffei/actions-python/.github/workflows/test.yml@main
+    with:
+      python-version: ${{ inputs.python-version }}
+      python-package-path: ${{ inputs.python-package-path }}
+      unit-test-file-pattern: ${{ inputs.unit-test-file-pattern }}
+      additional-script-path: ${{ inputs.additional-script-path }}
+      use-tox: ${{ inputs.use-tox }}
+      aws-account-id: ${{ inputs.aws-account-id }}
+      codeartifact-repository: ${{ inputs.codeartifact-repository }}
+    secrets:
+      pip-index-url: ${{ inputs.pip-index-url }}
+      pip-extra-index-url: ${{ inputs.pip-extra-index-url }}
+      user-token: ${{ inputs.user-token }}
+      sonar-token: ${{ inputs.sonar-token }}
+
+  publish-python-package:
+    uses: kraussmaffei/actions-python/.github/workflows/publish.yml@main
+    with:
+      python-version: ${{ inputs.python-version }}
+      python-package-path: ${{ inputs.python-package-path }}
+      aws-account-id: ${{ inputs.aws-account-id }}
+      codeartifact-repository: ${{ inputs.codeartifact-repository }}
+    secrets:
+      pip-index-url: ${{ inputs.pip-index-url }}
+      pip-extra-index-url: ${{ inputs.pip-extra-index-url }}
+      user-token: ${{ inputs.user-token }}
+      sonar-token: ${{ inputs.sonar-token }}

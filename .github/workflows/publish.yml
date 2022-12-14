@@ -1,0 +1,121 @@
+name: Publish python package
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "The python version to use for executing the quality tasks."
+        required: false
+        type: string
+        default: "3.8"
+      aws-account-id:
+        description: "The aws account id used for login."
+        type: string
+        required: true
+      aws-region:
+        description: "AWS region of the codeartifact domain."
+        type: string
+        required: false
+        default: "eu-central-1"
+      codeartifact-domain:
+        description: "Domain of the aws codeartifact repository."
+        type: string
+        required: false
+        default: "kraussmaffei"
+      codeartifact-repository:
+        description: "The aws codeartifact repository."
+        type: string
+        required: true
+      ref:
+        description: "The git ref to checkout."
+        type: string
+        required: false
+      user-name:
+        description: "User name to use for commiting code changes."
+        type: string
+        required: false
+        default: "github-actions[bot]"
+      user-email:
+        description: "User email to use for commiting code changes."
+        type: string
+        required: false
+        default: "github-actions[bot]@users.noreply.github.com"
+    outputs:
+      published-python-package-version:
+        description: "The version string of the published package."
+        value: ${{ jobs.publish-python-package.outputs.published-python-package-version }}
+    secrets:
+      pip-index-url:
+        description: "The pip index url."
+        required: true
+      pip-extra-index-url:
+        description: "The pip extra index url."
+        required: true
+      user-token:
+        description: "Token to be used to checkout the sources."
+        required: false
+
+jobs:
+  publish-python-package:
+    name: "Publish Python Package"
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      published-python-package-version: ${{ steps.get-next-version-information.outputs.upcoming-release-version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.user-token || github.token }}
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: "Configure aws credentials"
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/OidcDevOpsRole
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+          mask-aws-account-id: true
+
+      - name: "CodeArtifact login (twine)"
+        uses: kraussmaffei/aws-tools-login@main
+        with:
+          account: ${{ inputs.aws-account-id }}
+          region: ${{ inputs.aws-region }}
+          aws-tool: "codeartifact-twine"
+          codeartifact-domain: ${{ inputs.codeartifact-domain }}
+          codeartifact-repository: ${{ inputs.codeartifact-repository }}
+
+      - name: Install python tools
+        env:
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
+        run: |
+          pip install python-semantic-release==7.28.1 poetry
+
+      - name: Get next version information
+        id: get-next-version-information
+        shell: bash
+        run: |
+          echo "current-release-version=$(semantic-release print-version --current)" >> $GITHUB_OUTPUT
+          echo "upcoming-release-version=$(semantic-release print-version)" >> $GITHUB_OUTPUT
+
+      - name: Build and publish python package...
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.user-token || github.token }}
+          UPCOMING_VERSION: ${{ steps.get-next-version-information.outputs.upcoming-release-version }}
+        run: |
+          echo Configuring git...
+          git config --global user.name ${{ inputs.user-name }}
+          git config --global user.email ${{ inputs.user-email }}
+          current_branch=$(git rev-parse --abbrev-ref HEAD)
+          semantic-release publish --define branch="${current_branch}"

@@ -44,7 +44,7 @@ concurrency:
 
 jobs:
   publish-python-package:
-    uses: kraussmaffei/actions-python/.github/workflows/publish.yml@main
+    uses: kraussmaffei/actions-python/.github/workflows/test-and-publish.yml@main
     with:
       python-version: "3.8"
       python-package-path: $(echo ${GITHUB_REPOSITORY##*/} | tr -s '-' '_')

@@ -117,4 +117,5 @@ jobs:
           echo Configuring git...
           git config --global user.name ${{ inputs.user-name }}
           git config --global user.email ${{ inputs.user-email }}
-          semantic-release publish -D branch="$(git branch --show-current)" --verbosity=DEBUG
+          branch_ref=${{ github.ref }}
+          semantic-release publish -D branch="${branch_ref##*/}" --verbosity=DEBUG

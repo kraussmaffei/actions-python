@@ -18,15 +18,13 @@ jobs:
   test:
     uses: kraussmaffei/actions-python/.github/workflows/test.yml@main
     with:
-      python-version: "3.8"
+      python-version: <python-version>
       python-package-path: $(echo ${GITHUB_REPOSITORY##*/} | tr -s '-' '_')
-      aws-account-id: <account-id-to-use>
-      codeartifact-repository: <your-codeartifact-rpository>
     secrets:
       pip-index-url: <pip-index-url>
       pip-extra-index-url: <pip-extra-index-url>
       user-token: <user-token>
-      sonar-token: <sonarcloud-token>
+      sonar-token: <sonar-token>
 ```
 
 ## Test and publish usage
@@ -46,15 +44,15 @@ jobs:
   publish-python-package:
     uses: kraussmaffei/actions-python/.github/workflows/test-and-publish.yml@main
     with:
-      python-version: "3.8"
+      python-version: <python-version>
       python-package-path: $(echo ${GITHUB_REPOSITORY##*/} | tr -s '-' '_')
-      aws-account-id: <account-id-to-use>
-      codeartifact-repository: <your-codeartifact-rpository>
+      aws-account-id: <aws-account-id>
+      codeartifact-repository: <codeartifact-repository>
     secrets:
       pip-index-url: <pip-index-url>
       pip-extra-index-url: <pip-extra-index-url>
       user-token: <user-token>
-      sonar-token: <sonarcloud-token>
+      sonar-token: <sonar-token>
 ```
 
 ## Publish usage
@@ -76,13 +74,11 @@ jobs:
   publish-python-package:
     uses: kraussmaffei/actions-python/.github/workflows/publish.yml@main
     with:
-      python-version: "3.8"
-      python-package-path: $(echo ${GITHUB_REPOSITORY##*/} | tr -s '-' '_')
-      aws-account-id: <account-id-to-use>
-      codeartifact-repository: <your-codeartifact-rpository>
+      python-version: <python-version>
+      aws-account-id: <aws-account-id>
+      codeartifact-repository: <codeartifact-repository>
     secrets:
-      pip-index-url: ${{ inputs.pip-index-url }}
-      pip-extra-index-url: ${{ inputs.pip-extra-index-url }}
-      user-token: ${{ inputs.user-token }}
-      sonar-token: ${{ inputs.sonar-token }}
+      pip-index-url: <pip-index-url>
+      pip-extra-index-url: <pip-extra-index-url>
+      user-token: <user-token>
 ```

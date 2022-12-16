@@ -24,13 +24,13 @@ on:
       use-tox:
         description: "Use tox to run quality tasks"
         required: false
-        type: boolean
+        type: string
         default: false
       upload-to-sonarcloud:
         description: "Wheter the coverage calculation shall be uploaded to sonarcloud or not"
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: true
     secrets:
       pip-index-url:
         description: "The pip index url."

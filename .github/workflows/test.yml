@@ -24,9 +24,13 @@ on:
       use-tox:
         description: "Use tox to run quality tasks"
         required: false
-        type: string
+        type: boolean
         default: false
-
+      upload-to-sonarcloud:
+        description: "Wheter the coverage calculation shall be uploaded to sonarcloud or not"
+        required: false
+        type: boolean
+        default: false
     secrets:
       pip-index-url:
         description: "The pip index url."
@@ -86,6 +90,7 @@ jobs:
 
       - name: Running coverage calculation...
         shell: bash
+        if: ${{ inputs.use-tox == 'false' }}
         env:
           PIP_INDEX_URL: ${{ secrets.pip-index-url }}
           PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
@@ -94,18 +99,28 @@ jobs:
           COVERAGE_REPORT_OUTPUT: "./coverage-reports/coverage.xml"
         run: |
           pip install coverage
-          if [[ "${{ inputs.use-tox }}" == "true" ]]; then
-              echo "Using tox for running unit tests..."
-              pip install tox
-              tox
-          else
-              echo "Using github runner for running unit tests..."
-              pip install .[test-dependencies]
-              coverage run --source=${{ env.PYTHON_PACKAGE_PATH }} -m unittest discover -s tests -p ${{ env.UNIT_TEST_FILE_PATTERN }}
-          fi
+          pip install .[test-dependencies]
+          coverage run --source=${{ env.PYTHON_PACKAGE_PATH }} -m unittest discover -s tests -p ${{ env.UNIT_TEST_FILE_PATTERN }}
+          coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
+
+      - name: Running coverage calculation using tox...
+        shell: bash
+        if: ${{ inputs.use-tox == 'true' }}
+        env:
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
+          PYTHON_PACKAGE_PATH: ${{ inputs.python-package-path }}
+          UNIT_TEST_FILE_PATTERN: ${{ inputs.unit-test-file-pattern }}
+          COVERAGE_REPORT_OUTPUT: "./coverage-reports/coverage.xml"
+        run: |
+          pip install coverage
+          echo "Using tox for running unit tests..."
+          pip install tox
+          tox
           coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
 
       - name: SonarCloud Scan
+        if: ${{ inputs.upload-to-sonarcloud == 'true' }}
         uses: sonarsource/sonarcloud-github-action@v1.8
         env:
           GITHUB_TOKEN: ${{ secrets.ci-token || github.token }}

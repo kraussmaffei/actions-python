@@ -113,6 +113,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.user-token || github.token }}
           UPCOMING_VERSION: ${{ steps.get-next-version-information.outputs.upcoming-release-version }}
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
         run: |
           echo Configuring git...
           git config --global user.name ${{ inputs.user-name }}

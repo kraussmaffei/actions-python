@@ -125,3 +125,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ci-token || github.token }}
           SONAR_TOKEN: ${{ secrets.sonar-token }}
+
+  create-release-notes:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    name: "Create change notes comment"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Generate release notes
+        id: release-notes-preview
+        uses: guilhermetod/semantic-release-notes-preview@v1.0.0
+      - name: Comment release notes preview
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.number }}
+          body: ${{ steps.release-notes-preview.outputs.releaseNotes }}

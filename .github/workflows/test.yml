@@ -26,6 +26,11 @@ on:
         required: false
         type: string
         default: false
+      use-codestyle:
+        description: "Run codestyle formatter, import sorter, etc."
+        required: false
+        type: string
+        default: false
       upload-to-sonarcloud:
         description: "Wheter the coverage calculation shall be uploaded to sonarcloud or not"
         required: false
@@ -52,7 +57,10 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
-      - uses: psf/black@stable
+      
+      - name: Run black
+        if: ${{ inputs.use-codestyle == 'true' }}
+        uses: psf/black@stable
 
   test:
     name: "Test Python Package"

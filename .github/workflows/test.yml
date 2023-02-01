@@ -26,16 +26,26 @@ on:
         required: false
         type: string
         default: false
-      use-codestyle:
+      force-codestyle:
         description: "Run codestyle formatter, import sorter, etc."
         required: false
         type: string
-        default: false
+        default: true
       upload-to-sonarcloud:
         description: "Wheter the coverage calculation shall be uploaded to sonarcloud or not"
         required: false
         type: string
         default: true
+      user-name:
+        description: "User name to use for commiting code changes."
+        type: string
+        required: false
+        default: "github-actions[bot]"
+      user-email:
+        description: "User email to use for commiting code changes."
+        type: string
+        required: false
+        default: "github-actions[bot]@users.noreply.github.com"
     secrets:
       pip-index-url:
         description: "The pip index url."
@@ -57,10 +67,34 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
-      
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - uses: actions/checkout@v3
+        if: github.event_name != 'pull_request'
+        with:
+          fetch-depth: 0
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+
       - name: Run black
-        if: ${{ inputs.use-codestyle == 'true' }}
-        uses: psf/black@stable
+        if: ${{ inputs.force-codestyle == 'true' }}
+        env:
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
+        run: |
+          git config --global user.name ${{ inputs.user-name }}
+          git config --global user.email ${{ inputs.user-email }}
+          pip install black
+          black .
+          git add .
+          git commit -m "style: Ensure code style [skip ci]"
+          git push
 
   test:
     name: "Test Python Package"

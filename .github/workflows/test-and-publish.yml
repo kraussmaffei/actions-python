@@ -85,6 +85,7 @@ jobs:
       unit-test-file-pattern: ${{ inputs.unit-test-file-pattern }}
       additional-script-path: ${{ inputs.additional-script-path }}
       use-tox: ${{ inputs.use-tox }}
+      force-codestyle: false
     secrets:
       pip-index-url: ${{ secrets.pip-index-url }}
       pip-extra-index-url: ${{ secrets.pip-extra-index-url }}

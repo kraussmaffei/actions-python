@@ -48,6 +48,11 @@ on:
         description: "The git ref to checkout."
         type: string
         required: false
+      is-prerelease:
+        description: "Whether a prerelease shall be published or not"
+        type: boolean
+        default: false
+        required: false
       user-name:
         description: "User name to use for commiting code changes."
         type: string
@@ -98,6 +103,7 @@ jobs:
       python-version: ${{ inputs.python-version }}
       aws-account-id: ${{ inputs.aws-account-id }}
       codeartifact-repository: ${{ inputs.codeartifact-repository }}
+      is-prerelease: ${{ inputs.is-prerelease }}
     secrets:
       pip-index-url: ${{ secrets.pip-index-url }}
       pip-extra-index-url: ${{ secrets.pip-extra-index-url }}

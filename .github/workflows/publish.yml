@@ -29,6 +29,11 @@ on:
         description: "The git ref to checkout."
         type: string
         required: false
+      is-prerelease:
+        description: "Whether a prerelease shall be published or not"
+        type: boolean
+        default: false
+        required: false
       user-name:
         description: "User name to use for commiting code changes."
         type: string
@@ -108,7 +113,13 @@ jobs:
           echo "current-release-version=$(semantic-release print-version --current)" >> $GITHUB_OUTPUT
           echo "upcoming-release-version=$(semantic-release print-version)" >> $GITHUB_OUTPUT
 
-      - name: Build and publish python package...
+      - name: Configure git
+        run: |
+          git config --global user.name ${{ inputs.user-name }}
+          git config --global user.email ${{ inputs.user-email }}
+
+      - name: Build and publish python package pre-release...
+        if: inputs.is-prerelease == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.user-token || github.token }}
@@ -116,8 +127,17 @@ jobs:
           PIP_INDEX_URL: ${{ secrets.pip-index-url }}
           PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
         run: |
-          echo Configuring git...
-          git config --global user.name ${{ inputs.user-name }}
-          git config --global user.email ${{ inputs.user-email }}
+          branch_ref=${{ github.ref }}
+          semantic-release publish -D branch="${branch_ref##*/}" --verbosity=DEBUG --prerelease
+
+      - name: Build and publish python package release...
+        if: inputs.is-prerelease == 'false'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.user-token || github.token }}
+          UPCOMING_VERSION: ${{ steps.get-next-version-information.outputs.upcoming-release-version }}
+          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
+          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
+        run: |
           branch_ref=${{ github.ref }}
           semantic-release publish -D branch="${branch_ref##*/}" --verbosity=DEBUG

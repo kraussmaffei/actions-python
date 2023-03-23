@@ -56,7 +56,7 @@ jobs:
 
   test:
     name: "Test Python Package"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [format]
     timeout-minutes: 10
     steps:

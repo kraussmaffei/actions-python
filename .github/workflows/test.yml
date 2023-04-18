@@ -25,12 +25,12 @@ on:
         description: "Use tox to run quality tasks"
         required: false
         type: string
-        default: false
+        default: "false"
       upload-to-sonarcloud:
         description: "Wheter the coverage calculation shall be uploaded to sonarcloud or not"
         required: false
         type: string
-        default: true
+        default: "true"
     secrets:
       pip-index-url:
         description: "The pip index url."

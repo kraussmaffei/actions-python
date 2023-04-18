@@ -77,7 +77,7 @@ jobs:
           python-version: ${{ inputs.python-version }}
 
       - name: "Configure aws credentials"
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ${{ inputs.aws-region }}
           role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/OidcDevOpsRole

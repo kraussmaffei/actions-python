@@ -26,9 +26,6 @@ inputs:
   pip-extra-index-url:
     description: "The pip extra index url."
     required: true
-  user-token:
-    description: "Token to be used to checkout the sources."
-    required: false
   sonar-token:
     description: "The token to use for sonarcloud."
     required: false

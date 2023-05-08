@@ -99,7 +99,13 @@ jobs:
           PIP_INDEX_URL: ${{ secrets.pip-index-url }}
           PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
         run: |
-          pip install python-semantic-release==7.28.1 poetry
+          pip install python-semantic-release poetry
+          
+          # TODO: This is a hotfix!!! There were minor braking changes made in requests 2.30, 
+          # which is a dependency of python-semantic-release.
+          # It uses urllib3 v3 instead of v2.
+          # Please refer to https://github.com/psf/requests/releases/tag/v2.30.0
+          pip install "requests==2.29"
 
       - name: Get next version information
         id: get-next-version-information

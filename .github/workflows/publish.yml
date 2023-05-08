@@ -103,7 +103,7 @@ jobs:
           
           # TODO: This is a hotfix!!! Python requests 2.30. is faulty. 
           # Check if the bug is fixed in future releases.
-          pip install urllib3<2
+          pip install "requests==2.29"
 
       - name: Get next version information
         id: get-next-version-information

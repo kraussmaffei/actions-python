@@ -99,7 +99,11 @@ jobs:
           PIP_INDEX_URL: ${{ secrets.pip-index-url }}
           PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
         run: |
-          pip install python-semantic-release==7.28.1 poetry
+          pip install python-semantic-release poetry
+          
+          # TODO: This is a hotfix!!! Python requests 2.30. is faulty. 
+          # Check if the bug is fixed in future releases.
+          pip install urllib3<2
 
       - name: Get next version information
         id: get-next-version-information

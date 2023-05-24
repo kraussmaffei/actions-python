@@ -7,6 +7,11 @@ on:
         required: false
         type: string
         default: "3.8"
+      poetry-version:
+        description: "The version of poetry to be installed."
+        required: false
+        type: string
+        default: "1.5.0"
       python-package-path:
         description: "Path of the python package under quality test."
         required: true
@@ -31,6 +36,25 @@ on:
         required: false
         type: string
         default: "true"
+      aws-account-id:
+        description: "The aws account id where codartifact lives."
+        type: string
+        required: false
+        default: ""
+      codeartifact-repository:
+        description: "The aws codeartifact repository."
+        type: string
+        required: true
+      aws-region:
+        description: "AWS region of the codeartifact domain."
+        type: string
+        required: false
+        default: "eu-central-1"
+      codeartifact-domain:
+        description: "Domain of the aws codeartifact repository."
+        type: string
+        required: false
+        default: "kraussmaffei"
     secrets:
       pip-index-url:
         description: "The pip index url."
@@ -58,7 +82,10 @@ jobs:
     name: "Test Python Package"
     runs-on: ubuntu-latest
     needs: [format]
-    timeout-minutes: 10
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v3
 
@@ -66,6 +93,29 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ inputs.python-version }}
+
+      - name: Install Poetry Cli
+        shell: bash
+        run: |
+          pipx install poetry==${{ inputs.poetry-version }}
+
+      - name: "Configure aws credentials"
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ inputs.aws-region }}
+          role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/OidcDevOpsRole
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+          mask-aws-account-id: true
+
+      - name: "CodeArtifact login (poetry)"
+        uses: kraussmaffei/aws-tools-login@main
+        with:
+          account: ${{ inputs.aws-account-id }}
+          region: ${{ inputs.aws-region }}
+          aws-tool: "codeartifact-poetry"
+          codeartifact-domain: ${{ inputs.codeartifact-domain }}
+          codeartifact-repository: ${{ inputs.codeartifact-repository }}
 
       - name: "Run additional script"
         if: ${{ inputs.additional-script-path != '' }}
@@ -80,7 +130,7 @@ jobs:
           PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
         shell: bash
         run: |
-          pip install flake8
+          pipx install flake8
 
           # stop the build if there are Python syntax errors or undefined names
           flake8 ./${{ inputs.python-package-path }} --count --select=E9,F63,F7,F82 --builtins="_" --show-source --statistics
@@ -98,7 +148,7 @@ jobs:
           UNIT_TEST_FILE_PATTERN: ${{ inputs.unit-test-file-pattern }}
           COVERAGE_REPORT_OUTPUT: "./coverage-reports/coverage.xml"
         run: |
-          pip install coverage
+          pipx install coverage
           pip install .[test-dependencies]
           coverage run --source=${{ env.PYTHON_PACKAGE_PATH }} -m unittest discover -s tests -p ${{ env.UNIT_TEST_FILE_PATTERN }}
           coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
@@ -113,9 +163,8 @@ jobs:
           UNIT_TEST_FILE_PATTERN: ${{ inputs.unit-test-file-pattern }}
           COVERAGE_REPORT_OUTPUT: "./coverage-reports/coverage.xml"
         run: |
-          pip install coverage
-          echo "Using tox for running unit tests..."
-          pip install tox
+          pipx install coverage
+          pipx install tox
           tox
           coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
 

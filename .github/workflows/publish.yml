@@ -7,6 +7,16 @@ on:
         required: false
         type: string
         default: "3.8"
+      python-semantic-release-version:
+        description: "The version of python-semantic-release to be installed."
+        required: false
+        type: string
+        default: "7.33.5"
+      poetry-version:
+        description: "The version of poetry to be installed."
+        required: false
+        type: string
+        default: "1.5.0"
       aws-account-id:
         description: "The aws account id used for login."
         type: string
@@ -58,7 +68,7 @@ jobs:
   publish-python-package:
     name: "Publish Python Package"
     runs-on: ubuntu-20.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       id-token: write
       contents: read
@@ -94,12 +104,26 @@ jobs:
           codeartifact-domain: ${{ inputs.codeartifact-domain }}
           codeartifact-repository: ${{ inputs.codeartifact-repository }}
 
-      - name: Install python tools
+      - name: Install Poetry Cli
+        shell: bash
+        run: |
+          pipx install poetry==${{ inputs.poetry-version }}
+
+      - name: "CodeArtifact login (poetry)"
+        uses: kraussmaffei/aws-tools-login@main
+        with:
+          account: ${{ inputs.aws-account-id }}
+          region: ${{ inputs.aws-region }}
+          aws-tool: "codeartifact-poetry"
+          codeartifact-domain: ${{ inputs.codeartifact-domain }}
+          codeartifact-repository: ${{ inputs.codeartifact-repository }}
+
+      - name: Install python-semantic-release
         env:
           PIP_INDEX_URL: ${{ secrets.pip-index-url }}
           PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
         run: |
-          pip install python-semantic-release poetry
+          pip install python-semantic-release==${{ inputs.python-semantic-release-version }}
           
           # TODO: This is a hotfix!!! There were minor braking changes made in requests 2.30, 
           # which is a dependency of python-semantic-release.

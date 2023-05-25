@@ -36,26 +36,6 @@ on:
         required: false
         type: string
         default: "true"
-      aws-account-id:
-        description: "The aws account id where codartifact lives."
-        type: string
-        required: false
-        default: ""
-      codeartifact-repository:
-        description: "The aws codeartifact repository."
-        type: string
-        required: false
-        default: "dss"
-      aws-region:
-        description: "AWS region of the codeartifact domain."
-        type: string
-        required: false
-        default: "eu-central-1"
-      codeartifact-domain:
-        description: "Domain of the aws codeartifact repository."
-        type: string
-        required: false
-        default: "kraussmaffei"
     secrets:
       pip-index-url:
         description: "The pip index url."
@@ -100,11 +80,23 @@ jobs:
         run: |
           pipx install poetry==${{ inputs.poetry-version }}
 
+      - name: Codeartifact creds
+        id: codeartifact-creds
+        run: |
+          regex="https://([A-Za-z0-9_]+).(.+)@([A-Za-z0-9_]+)-([0-9]{12})\.d\.codeartifact\.(.+)\.amazonaws.com/pypi/([A-Za-z0-9_]+)/simple/"
+
+          if [[ ${{ secrets.pip-index-url }} =~ $regex ]]; then
+              echo "domain=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+              echo "account=${BASH_REMATCH[4]}" >> $GITHUB_OUTPUT
+              echo "region=${BASH_REMATCH[5]}" >> $GITHUB_OUTPUT
+              echo "repository=${BASH_REMATCH[6]}" >> $GITHUB_OUTPUT
+          fi
+
       - name: "Configure aws credentials"
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-region: ${{ inputs.aws-region }}
-          role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/OidcDevOpsRole
+          aws-region: ${{ steps.codeartifact-creds.outputs.region }}
+          role-to-assume: arn:aws:iam::${{ steps.codeartifact-creds.outputs.account }}:role/OidcDevOpsRole
           role-duration-seconds: 3600
           role-skip-session-tagging: true
           mask-aws-account-id: true
@@ -112,11 +104,11 @@ jobs:
       - name: "CodeArtifact login (poetry)"
         uses: kraussmaffei/aws-tools-login@main
         with:
-          account: ${{ inputs.aws-account-id }}
-          region: ${{ inputs.aws-region }}
+          account: ${{ steps.codeartifact-creds.outputs.account }}
+          region: ${{ steps.codeartifact-creds.outputs.region }}
           aws-tool: "codeartifact-poetry"
-          codeartifact-domain: ${{ inputs.codeartifact-domain }}
-          codeartifact-repository: ${{ inputs.codeartifact-repository }}
+          codeartifact-domain: ${{ steps.codeartifact-creds.outputs.domain }}
+          codeartifact-repository: ${{ steps.codeartifact-creds.outputs.repository }}
 
       - name: "Run additional script"
         if: ${{ inputs.additional-script-path != '' }}

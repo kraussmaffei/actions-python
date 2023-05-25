@@ -25,7 +25,7 @@ on:
         description: "Uses tox to run quality tasks if 'true'"
         required: false
         type: string
-        default: false
+        default: "false"
       aws-account-id:
         description: "The aws account id used for login."
         type: string

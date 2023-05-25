@@ -44,7 +44,8 @@ on:
       codeartifact-repository:
         description: "The aws codeartifact repository."
         type: string
-        required: true
+        required: false
+        default: "dss"
       aws-region:
         description: "AWS region of the codeartifact domain."
         type: string

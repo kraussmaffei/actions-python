@@ -34,7 +34,8 @@ on:
       codeartifact-repository:
         description: "The aws codeartifact repository."
         type: string
-        required: true
+        required: false
+        default: "dss"
       ref:
         description: "The git ref to checkout."
         type: string

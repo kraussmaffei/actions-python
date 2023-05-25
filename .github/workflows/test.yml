@@ -141,8 +141,7 @@ jobs:
           UNIT_TEST_FILE_PATTERN: ${{ inputs.unit-test-file-pattern }}
           COVERAGE_REPORT_OUTPUT: "./coverage-reports/coverage.xml"
         run: |
-          pipx install coverage
-          pip install .[test-dependencies]
+          pip install coverage .[test-dependencies]
           coverage run --source=${{ env.PYTHON_PACKAGE_PATH }} -m unittest discover -s tests -p ${{ env.UNIT_TEST_FILE_PATTERN }}
           coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
 

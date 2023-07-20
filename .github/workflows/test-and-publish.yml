@@ -94,7 +94,7 @@ jobs:
 
   publish-python-package:
     needs: test
-    uses: kraussmaffei/actions-python/.github/workflows/publish.yml@andreasfedermannkm-patch-1
+    uses: kraussmaffei/actions-python/.github/workflows/publish.yml@main
     with:
       python-version: ${{ inputs.python-version }}
       aws-account-id: ${{ inputs.aws-account-id }}

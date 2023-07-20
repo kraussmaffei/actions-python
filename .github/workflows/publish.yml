@@ -11,7 +11,7 @@ on:
         description: "The version of python-semantic-release to be installed."
         required: false
         type: string
-        default: "8.0.2"
+        default: "7.34.6"
       poetry-version:
         description: "The version of poetry to be installed."
         required: false

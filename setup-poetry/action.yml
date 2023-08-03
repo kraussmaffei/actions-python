@@ -1,0 +1,57 @@
+name: "Deploy to devices"
+description: "Running tests to ensure deployment quality."
+
+inputs:
+  pip-index-url:
+    description: "The pip index url for an aws codeartifact repository."
+    required: true
+  pip-extra-index-url:
+    description: "The pip index url for an additional aws codeartifact repository."
+    required: true
+  poetry-version:
+    description: "Version of poetry to install."
+    required: true
+  python-version:
+    description: "Version of poetry to install."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Codeartifact creds
+      id: codeartifact-creds
+      shell: bash
+      run: |
+        regex="https://([A-Za-z0-9_]+).(.+)@([A-Za-z0-9_]+)-([0-9]{12})\.d\.codeartifact\.(.+)\.amazonaws.com/pypi/([A-Za-z0-9_]+)/simple/"
+
+        if [[ ${{ inputs.pip-index-url }} =~ $regex ]]; then
+            echo "user=${BASH_REMATCH[1]}" >> $GITHUB_OUTPUT
+            codeartifact_token=${BASH_REMATCH[2]}
+            echo "domain=${BASH_REMATCH[3]}" >> $GITHUB_OUTPUT
+            echo "account=${BASH_REMATCH[4]}" >> $GITHUB_OUTPUT
+            echo "region=${BASH_REMATCH[5]}" >> $GITHUB_OUTPUT
+            echo "repository=${BASH_REMATCH[6]}" >> $GITHUB_OUTPUT
+        fi
+        echo "::add-mask::$codeartifact_token"
+        echo "token=${codeartifact_token}" >> $GITHUB_OUTPUT
+
+    - name: "Install poetry"
+      shell: bash
+      run: |
+        pipx install poetry==${{ inputs.poetry-version }} --pip-args="--index-url ${{ inputs.pip-index-url }} --extra-index-url ${{ inputs.pip-extra-index-url }}"
+
+    - name: "Setup Python"
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: "poetry"
+
+    - name: "Configure poetry"
+      shell: bash
+      run: |
+        poetry config --quiet http-basic.dss ${{ steps.codeartifact-creds.outputs.user }} ${{ steps.codeartifact-creds.outputs.token }}
+        poetry config --quiet http-basic.dss-upstream ${{ steps.codeartifact-creds.outputs.user }} ${{ steps.codeartifact-creds.outputs.token }}
+        poetry config virtualenvs.create true
+        poetry config virtualenvs.prefer-active-python true
+        poetry config virtualenvs.options.system-site-packages true
+        echo "$(poetry env info --path)/lib/python${{ inputs.python-version }}/site-packages" > "$(dirname $(which python))/../lib/python${{ inputs.python-version }}/site-packages/pypoetry.pth"

@@ -162,7 +162,7 @@ jobs:
 
       - name: SonarCloud Scan
         if: ${{ inputs.upload-to-sonarcloud == 'true' }}
-        uses: sonarsource/sonarcloud-github-action@v2.0
+        uses: sonarsource/sonarcloud-github-action@v2.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.ci-token || github.token }}
           SONAR_TOKEN: ${{ secrets.sonar-token }}

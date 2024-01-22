@@ -84,7 +84,7 @@ runs:
 
     - name: SonarCloud Scan
       if: ${{ inputs.upload-to-sonarcloud == 'true' }}
-      uses: sonarsource/sonarcloud-github-action@v1.8
+      uses: sonarsource/sonarcloud-github-action@v2.0.0
       env:
         GITHUB_TOKEN: ${{ inputs.ci-token || github.token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}

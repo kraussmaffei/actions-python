@@ -76,7 +76,7 @@ jobs:
     outputs:
       published-python-package-version: ${{ steps.get-next-version-information.outputs.upcoming-release-version }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.user-token || github.token }}

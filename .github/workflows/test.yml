@@ -2,6 +2,11 @@ name: Run tests
 on:
   workflow_call:
     inputs:
+      lfs:
+        description: "Passed to the checkout action. If true lfs files are downloaded"
+        required: false
+        type: boolean
+        default: false
       python-version:
         description: "The python version to use for executing the quality tasks."
         required: false
@@ -71,6 +76,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
             fetch-depth: 0
+            lfs: ${{ inputs.lfs }}
 
       - name: "Setup Python"
         uses: actions/setup-python@v4

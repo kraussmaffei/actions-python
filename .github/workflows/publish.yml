@@ -83,12 +83,12 @@ jobs:
           ref: ${{ inputs.ref || github.sha }}
 
       - name: "Setup Python"
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python-version }}
 
       - name: "Configure aws credentials"
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ inputs.aws-region }}
           role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/OidcDevOpsRole

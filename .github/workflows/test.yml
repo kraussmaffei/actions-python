@@ -73,7 +73,7 @@ jobs:
             fetch-depth: 0
 
       - name: "Setup Python"
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python-version }}
 
@@ -95,7 +95,7 @@ jobs:
           fi
 
       - name: "Configure aws credentials"
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ steps.codeartifact-creds.outputs.region }}
           role-to-assume: arn:aws:iam::${{ steps.codeartifact-creds.outputs.account }}:role/OidcDevOpsRole

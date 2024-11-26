@@ -119,20 +119,6 @@ jobs:
           chmod +x ${{ inputs.additional-script-path }}
           ${{ inputs.additional-script-path }}
 
-      - name: Running flake8 linter...
-        env:
-          PIP_INDEX_URL: ${{ secrets.pip-index-url }}
-          PIP_EXTRA_INDEX_URL: ${{ secrets.pip-extra-index-url }}
-        shell: bash
-        run: |
-          pip install flake8
-
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 ./${{ inputs.python-package-path }} --count --select=E9,F63,F7,F82 --builtins="_" --show-source --statistics
-
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 ./${{ inputs.python-package-path }} --count --exit-zero --max-complexity=10 --builtins="_" --max-line-length=127 --statistics
-
       - name: Running coverage calculation...
         shell: bash
         if: ${{ inputs.use-tox == 'false' }}

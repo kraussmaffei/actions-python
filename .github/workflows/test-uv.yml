@@ -1,0 +1,110 @@
+name: Run tests
+on:
+  workflow_call:
+    inputs:
+      python-package-path:
+        description: "Path of the python package under quality test."
+        required: true
+        type: string
+      unit-test-file-pattern:
+        description: "The pattern to search for unit test files."
+        required: false
+        type: string
+        default: "'test*.py'"
+      additional-script-path:
+        description: "File path to the script which shall be additionally executed."
+        type: string
+        required: false
+        default: ""
+      upload-to-sonarcloud:
+        description: "Whether the coverage calculation shall be uploaded to sonarcloud or not"
+        required: false
+        type: string
+        default: "true"
+      check-if-lockfile-needs-update:
+        description: "If set to true, the workflow will check if the uv.lock needs an update"
+        type: string
+        required: false
+        default: "true"
+    secrets:
+      codeartifact-token:
+        description: "Token to authorize to aws codeartifact"
+        required: true
+      user-token:
+        description: "Token to be used to checkout the sources."
+        required: false
+      sonar-token:
+        description: "The token to use for sonarcloud."
+        required: false
+
+jobs:
+  lint-and-format:
+    name: "Use ruff to lint and check format"
+    runs-on: ubuntu-latest
+    env:
+      UV_INDEX_KM_CODEARTIFACT_USERNAME: aws
+      UV_INDEX_KM_CODEARTIFACT_PASSWORD: ${{ secrets.codeartifact-token }}
+    steps:
+      - name: "Checkout Repo"
+        uses: actions/checkout@v4
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v5
+      - name: Lint the code
+        run: uv run --only-dev ruff check
+      - name: Check formatting
+        run: uv run --only-dev ruff format --check
+
+  check-lock:
+    name: "Check if uv.lock is up to date"
+    runs-on: ubuntu-latest
+    env:
+      UV_INDEX_KM_CODEARTIFACT_USERNAME: aws
+      UV_INDEX_KM_CODEARTIFACT_PASSWORD: ${{ secrets.codeartifact-token }}
+    if: ${{ inputs.check-if-lockfile-needs-update == 'true' }}
+    steps:
+      - name: "Checkout Repo"
+        uses: actions/checkout@v4
+      - name: "Setup uv"
+        uses: astral-sh/setup-uv@v5
+      - name: "Run check"
+        run: uv lock --check
+
+  test:
+    name: "Test Python Package"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+            fetch-depth: 0
+
+      - name: "Install uv"
+        uses: astral-sh/setup-uv@v5
+
+      - name: "Run additional script"
+        if: ${{ inputs.additional-script-path != '' }}
+        shell: bash
+        run: |
+          chmod +x ${{ inputs.additional-script-path }}
+          ${{ inputs.additional-script-path }}
+
+      - name: Running coverage calculation...
+        shell: bash
+        env:
+          UV_INDEX_KM_CODEARTIFACT_USERNAME: aws
+          UV_INDEX_KM_CODEARTIFACT_PASSWORD: ${{ secrets.codeartifact-token }}
+        run: |
+          uv run --no-dev --frozen coverage run --source=${{ inputs.python-package-path }} -m unittest discover -s tests -p ${{ inputs.unit-test-file-pattern }}
+
+      - name: "Create coverage report"
+        run: uv run --no-dev --frozen coverage xml -o ./coverage-reports/coverage.xml
+
+      - name: SonarCloud Scan
+        if: ${{ inputs.upload-to-sonarcloud == 'true' }}
+        uses: SonarSource/sonarqube-scan-action@v4.2.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.ci-token || github.token }}
+          SONAR_TOKEN: ${{ secrets.sonar-token }}

@@ -82,9 +82,9 @@ runs:
         tox
         coverage xml -o ${{ env.COVERAGE_REPORT_OUTPUT }}
 
-    - name: SonarCloud Scan
+    - name: SonarQube Scan
       if: ${{ inputs.upload-to-sonarcloud == 'true' }}
-      uses: sonarsource/sonarcloud-github-action@v2.0.0
+      uses: SonarSource/sonarqube-scan-action@v6.0.0
       env:
         GITHUB_TOKEN: ${{ inputs.ci-token || github.token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}
